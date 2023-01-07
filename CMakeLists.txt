@@ -49,25 +49,26 @@ ${Pangolin_INCLUDE_DIRS}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
-src/System.cc
-src/Tracking.cc
-src/LocalMapping.cc
-src/LoopClosing.cc
-src/ORBextractor.cc
-src/ORBmatcher.cc
-src/FrameDrawer.cc
-src/Converter.cc
-src/MapPoint.cc
-src/KeyFrame.cc
-src/Map.cc
-src/MapDrawer.cc
-src/Optimizer.cc
-src/PnPsolver.cc
-src/Frame.cc
-src/KeyFrameDatabase.cc
-src/Sim3Solver.cc
-src/Initializer.cc
-src/Viewer.cc
+   src/System.cc
+   src/Tracking.cc
+   src/LocalMapping.cc
+   src/LoopClosing.cc
+   src/ORBextractor.cc
+   src/ORBmatcher.cc
+   src/FrameDrawer.cc
+   src/Converter.cc
+   src/MapPoint.cc
+   src/KeyFrame.cc
+   src/Map.cc
+   src/MapDrawer.cc
+   src/Optimizer.cc
+   src/PnPsolver.cc
+   src/Frame.cc
+   src/KeyFrameDatabase.cc
+   src/Sim3Solver.cc
+   src/Initializer.cc
+   src/Viewer.cc
+   src/Object.cc
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -111,3 +112,8 @@ add_executable(mono_euroc
 Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Object)
+
+add_executable(object_kitti
+        Examples/Object/object_kitti.cc)
+target_link_libraries(object_kitti ${PROJECT_NAME})
