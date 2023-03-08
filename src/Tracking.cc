@@ -45,7 +45,7 @@ namespace ORB_SLAM2
 
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
-    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
+    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(nullptr)), mpSystem(pSys), mpViewer(nullptr),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
 {
     // Load camera parameters from settings file
@@ -162,6 +162,45 @@ void Tracking::SetViewer(Viewer *pViewer)
 {
     mpViewer=pViewer;
 }
+
+cv::Mat Tracking::GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
+    {
+      mImGray = imRectLeft;
+      cv::Mat imGrayRight = imRectRight;
+
+      if(mImGray.channels()==3)
+      {
+        if(mbRGB)
+        {
+          cvtColor(mImGray,mImGray,CV_RGB2GRAY);
+          cvtColor(imGrayRight,imGrayRight,CV_RGB2GRAY);
+        }
+        else
+        {
+          cvtColor(mImGray,mImGray,CV_BGR2GRAY);
+          cvtColor(imGrayRight,imGrayRight,CV_BGR2GRAY);
+        }
+      }
+      else if(mImGray.channels()==4)
+      {
+        if(mbRGB)
+        {
+          cvtColor(mImGray,mImGray,CV_RGBA2GRAY);
+          cvtColor(imGrayRight,imGrayRight,CV_RGBA2GRAY);
+        }
+        else
+        {
+          cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
+          cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
+        }
+      }
+
+      mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+
+      Track();
+
+      return mCurrentFrame.mTcw.clone();
+    }
 
 
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
@@ -441,7 +480,7 @@ void Tracking::Track()
                     if(pMP->Observations()<1)
                     {
                         mCurrentFrame.mvbOutlier[i] = false;
-                        mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(NULL);
+                        mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(nullptr);
                     }
             }
 
@@ -464,7 +503,7 @@ void Tracking::Track()
             for(int i=0; i<mCurrentFrame.N;i++)
             {
                 if(mCurrentFrame.mvpMapPoints[i] && mCurrentFrame.mvbOutlier[i])
-                    mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(NULL);
+                    mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(nullptr);
             }
         }
 
@@ -504,7 +543,6 @@ void Tracking::Track()
     }
 
 }
-
 
 void Tracking::StereoInitialization()
 {
@@ -590,7 +628,7 @@ void Tracking::MonocularInitialization()
         if((int)mCurrentFrame.mvKeys.size()<=100)
         {
             delete mpInitializer;
-            mpInitializer = static_cast<Initializer*>(NULL);
+            mpInitializer = static_cast<Initializer*>(nullptr);
             fill(mvIniMatches.begin(),mvIniMatches.end(),-1);
             return;
         }
@@ -603,7 +641,7 @@ void Tracking::MonocularInitialization()
         if(nmatches<100)
         {
             delete mpInitializer;
-            mpInitializer = static_cast<Initializer*>(NULL);
+            mpInitializer = static_cast<Initializer*>(nullptr);
             return;
         }
 
@@ -784,7 +822,7 @@ bool Tracking::TrackReferenceKeyFrame()
             {
                 MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
 
-                mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(NULL);
+                mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(nullptr);
                 mCurrentFrame.mvbOutlier[i]=false;
                 pMP->mbTrackInView = false;
                 pMP->mnLastFrameSeen = mCurrentFrame.mnId;
@@ -874,7 +912,7 @@ bool Tracking::TrackWithMotionModel()
 
     mCurrentFrame.SetPose(mVelocity*mLastFrame.mTcw);
 
-    fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
+    fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(nullptr));
 
     // Project points seen in previous frame
     int th;
@@ -887,7 +925,7 @@ bool Tracking::TrackWithMotionModel()
     // If few matches, uses a wider window search
     if(nmatches<20)
     {
-        fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(NULL));
+        fill(mCurrentFrame.mvpMapPoints.begin(),mCurrentFrame.mvpMapPoints.end(),static_cast<MapPoint*>(nullptr));
         nmatches = matcher.SearchByProjection(mCurrentFrame,mLastFrame,2*th,mSensor==System::MONOCULAR);
     }
 
@@ -907,7 +945,7 @@ bool Tracking::TrackWithMotionModel()
             {
                 MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
 
-                mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(NULL);
+                mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(nullptr);
                 mCurrentFrame.mvbOutlier[i]=false;
                 pMP->mbTrackInView = false;
                 pMP->mnLastFrameSeen = mCurrentFrame.mnId;
@@ -957,7 +995,7 @@ bool Tracking::TrackLocalMap()
                     mnMatchesInliers++;
             }
             else if(mSensor==System::STEREO)
-                mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(NULL);
+                mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(nullptr);
 
         }
     }
@@ -1105,7 +1143,7 @@ void Tracking::CreateNewKeyFrame()
                 else if(pMP->Observations()<1)
                 {
                     bCreateNew = true;
-                    mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(NULL);
+                    mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(nullptr);
                 }
 
                 if(bCreateNew)
@@ -1150,7 +1188,7 @@ void Tracking::SearchLocalPoints()
         {
             if(pMP->isBad())
             {
-                *vit = static_cast<MapPoint*>(NULL);
+                *vit = static_cast<MapPoint*>(nullptr);
             }
             else
             {
@@ -1245,7 +1283,7 @@ void Tracking::UpdateLocalKeyFrames()
             }
             else
             {
-                mCurrentFrame.mvpMapPoints[i]=NULL;
+                mCurrentFrame.mvpMapPoints[i]=nullptr;
             }
         }
     }
@@ -1254,7 +1292,7 @@ void Tracking::UpdateLocalKeyFrames()
         return;
 
     int max=0;
-    KeyFrame* pKFmax= static_cast<KeyFrame*>(NULL);
+    KeyFrame* pKFmax= static_cast<KeyFrame*>(nullptr);
 
     mvpLocalKeyFrames.clear();
     mvpLocalKeyFrames.reserve(3*keyframeCounter.size());
@@ -1434,7 +1472,7 @@ bool Tracking::Relocalization()
                         sFound.insert(vvpMapPointMatches[i][j]);
                     }
                     else
-                        mCurrentFrame.mvpMapPoints[j]=NULL;
+                        mCurrentFrame.mvpMapPoints[j]=nullptr;
                 }
 
                 int nGood = Optimizer::PoseOptimization(&mCurrentFrame);
@@ -1444,7 +1482,7 @@ bool Tracking::Relocalization()
 
                 for(int io =0; io<mCurrentFrame.N; io++)
                     if(mCurrentFrame.mvbOutlier[io])
-                        mCurrentFrame.mvpMapPoints[io]=static_cast<MapPoint*>(NULL);
+                        mCurrentFrame.mvpMapPoints[io]=static_cast<MapPoint*>(nullptr);
 
                 // If few inliers, search by projection in a coarse window and optimize again
                 if(nGood<50)
@@ -1472,7 +1510,7 @@ bool Tracking::Relocalization()
 
                                 for(int io =0; io<mCurrentFrame.N; io++)
                                     if(mCurrentFrame.mvbOutlier[io])
-                                        mCurrentFrame.mvpMapPoints[io]=NULL;
+                                        mCurrentFrame.mvpMapPoints[io]=nullptr;
                             }
                         }
                     }
@@ -1537,7 +1575,7 @@ void Tracking::Reset()
     if(mpInitializer)
     {
         delete mpInitializer;
-        mpInitializer = static_cast<Initializer*>(NULL);
+        mpInitializer = static_cast<Initializer*>(nullptr);
     }
 
     mlRelativeFramePoses.clear();

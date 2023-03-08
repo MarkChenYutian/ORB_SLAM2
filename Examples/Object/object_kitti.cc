@@ -1,40 +1,48 @@
 //
 // Created by yutian on 1/6/23.
 //
+
 #include<iostream>
 #include<algorithm>
 #include<chrono>
-#include<iomanip>
+#include<dirent.h>
 
 #include<opencv2/core/core.hpp>
 
-#include"System.h"
+#include<System.h>
 
 using namespace std;
 
-void LoadImages(const string &strPathToSequence, vector<string> &vstrImageFilenames,
-                vector<double> &vTimestamps);
+void LoadImages(const string &strPathToSeqLeft, const string &strPathToSeqRight, vector<string> &vstrImageLeft,
+                vector<string> &vstrImageRight, vector<double> &vTimestamps);
 
 int main(int argc, char **argv)
 {
-  if(argc != 4)
+  if(argc != 6)
   {
-    cerr << endl << "Usage: ./object_kitti path_to_vocabulary path_to_settings path_to_sequence" << endl;
+    cerr << endl << "Usage: ./stereo_kitti "
+                    "path_to_vocabulary "
+                    "path_to_settings "
+                    "path_to_sequence_left "
+                    "path_to_sequence_right "
+                    "path_to_bbox_file" << endl;
     return 1;
   }
 
   // Retrieve paths to images
-  vector<string> vstrImageFilenames;
+  vector<string> vstrImageLeft;
+  vector<string> vstrImageRight;
   vector<double> vTimestamps;
-  LoadImages(string(argv[3]), vstrImageFilenames, vTimestamps);
 
-  size_t nImages = vstrImageFilenames.size();
+  LoadImages(string(argv[3]), string(argv[4]), vstrImageLeft, vstrImageRight, vTimestamps);
+
+  const int nImages = vstrImageLeft.size();
 
   // Create SLAM system. It initializes all system threads and gets ready to process frames.
-  ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::MONOCULAR,true);
+  ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
 
   // Vector for tracking time statistics
-  vector<double> vTimesTrack;
+  vector<float> vTimesTrack;
   vTimesTrack.resize(nImages);
 
   cout << endl << "-------" << endl;
@@ -42,16 +50,18 @@ int main(int argc, char **argv)
   cout << "Images in the sequence: " << nImages << endl << endl;
 
   // Main loop
-  cv::Mat im;
+  cv::Mat imLeft, imRight;
   for(int ni=0; ni<nImages; ni++)
   {
-    // Read image from file
-    im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
+    // Read left and right images from file
+    imLeft = cv::imread(vstrImageLeft[ni],CV_LOAD_IMAGE_UNCHANGED);
+    imRight = cv::imread(vstrImageRight[ni],CV_LOAD_IMAGE_UNCHANGED);
     double tframe = vTimestamps[ni];
 
-    if(im.empty())
+    if(imLeft.empty())
     {
-      cerr << endl << "Failed to load image at: " << vstrImageFilenames[ni] << endl;
+      cerr << endl << "Failed to load image at: "
+           << string(vstrImageLeft[ni]) << endl;
       return 1;
     }
 
@@ -61,8 +71,8 @@ int main(int argc, char **argv)
     std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
 
-    // Pass the image to the SLAM system
-    SLAM.TrackMonocular(im,tframe);
+    // Pass the images to the SLAM system
+    SLAM.TrackObject(imLeft,imRight,tframe);
 
 #ifdef COMPILEDWITHC11
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -82,7 +92,9 @@ int main(int argc, char **argv)
       T = tframe-vTimestamps[ni-1];
 
     if(ttrack<T)
-      usleep((T-ttrack)*1e6);
+      // Note: I changed this since the KITTI tracking dataset does not contain
+      // timestamp information, so just play all the stamps in constant time spacing
+      usleep((T-ttrack)*5e4);
   }
 
   // Stop all threads
@@ -97,42 +109,51 @@ int main(int argc, char **argv)
   }
   cout << "-------" << endl << endl;
   cout << "median tracking time: " << vTimesTrack[nImages/2] << endl;
-  cout << "mean tracking time: " << totaltime/((float) nImages) << endl;
+  cout << "mean tracking time: " << totaltime/nImages << endl;
 
   // Save camera trajectory
-  SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+  SLAM.SaveTrajectoryKITTI("CameraTrajectory.txt");
 
   return 0;
 }
 
-void LoadImages(const string &strPathToSequence, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)
+bool has_suffix(const std::string &str, const std::string &suffix)
 {
-  ifstream fTimes;
-  string strPathTimeFile = strPathToSequence + "/times.txt";
-  fTimes.open(strPathTimeFile.c_str());
-  while(!fTimes.eof())
-  {
-    string s;
-    getline(fTimes,s);
-    if(!s.empty())
-    {
-      stringstream ss;
-      ss << s;
-      double t;
-      ss >> t;
-      vTimestamps.push_back(t);
+  return str.size() >= suffix.size() &&
+         str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+void LoadImages(const string &strPathToSeqLeft, const string &strPathToSeqRight, vector<string> &vstrImageLeft,
+                vector<string> &vstrImageRight, vector<double> &vTimestamps)
+{
+  DIR *dir;
+  struct dirent *ent;
+
+  vector<string> vstrImageName;
+
+  if ((dir = opendir (strPathToSeqLeft.c_str())) != nullptr) {
+    while ((ent = readdir (dir)) != nullptr) {
+      string fileName = ent -> d_name;
+      if (has_suffix(fileName, ".png")) {
+        vstrImageName.emplace_back(ent->d_name);
+      }
     }
+    closedir (dir);
+  } else {
+    cerr << "Failed to read image files in the directory" << endl;
+    exit(-1);
   }
 
-  string strPrefixLeft = strPathToSequence + "/image_0/";
+  std::sort(vstrImageName.begin(), vstrImageName.end());
 
-  const int nTimes = vTimestamps.size();
-  vstrImageFilenames.resize(nTimes);
+  for (const string &imageName : vstrImageName) {
+    vstrImageLeft.emplace_back(strPathToSeqLeft + "/" + imageName);
+    vstrImageRight.emplace_back(strPathToSeqRight + "/" + imageName);
 
-  for(int i=0; i<nTimes; i++)
-  {
-    stringstream ss;
-    ss << setfill('0') << setw(6) << i;
-    vstrImageFilenames[i] = strPrefixLeft + ss.str() + ".png";
+    stringstream parser;
+    double timeStamp;
+    parser << imageName.substr(0, imageName.size() - 4);
+    parser >> timeStamp;
+    vTimestamps.emplace_back(timeStamp);
   }
 }

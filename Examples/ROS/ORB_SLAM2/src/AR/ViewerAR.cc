@@ -413,7 +413,7 @@ Plane* ViewerAR::DetectPlane(const cv::Mat Tcw, const std::vector<MapPoint*> &vM
     const int N = vPoints.size();
 
     if(N<50)
-        return NULL;
+        return nullptr;
 
 
     // Indices for minimum set selection
@@ -493,7 +493,7 @@ Plane* ViewerAR::DetectPlane(const cv::Mat Tcw, const std::vector<MapPoint*> &vM
         }
     }
 
-    vector<MapPoint*> vInlierMPs(nInliers,NULL);
+    vector<MapPoint*> vInlierMPs(nInliers,nullptr);
     int nin = 0;
     for(int i=0; i<N; i++)
     {
