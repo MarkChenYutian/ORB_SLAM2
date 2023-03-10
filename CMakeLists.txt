@@ -68,7 +68,7 @@ add_library(${PROJECT_NAME} SHARED
    src/Sim3Solver.cc
    src/Initializer.cc
    src/Viewer.cc
-        )
+        src/Object.cc)
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}

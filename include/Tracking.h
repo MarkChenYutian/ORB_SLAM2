@@ -37,6 +37,7 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
+#include "Object.h"
 
 #include <mutex>
 
@@ -49,16 +50,17 @@ class Map;
 class LocalMapping;
 class LoopClosing;
 class System;
+class ObjectBox;
 
 class Tracking
 {  
 
 public:
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
-             KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
+             KeyFrameDatabase* pKFDB, const string &strSettingPath, int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageObject(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
+    cv::Mat GrabImageObject(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const vector<ObjectBox> &vObjectBox, const double &timestamp);
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);

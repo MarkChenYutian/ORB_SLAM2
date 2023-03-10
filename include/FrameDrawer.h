@@ -24,6 +24,7 @@
 #include "Tracking.h"
 #include "MapPoint.h"
 #include "Map.h"
+//#include "Object.h"
 
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
@@ -36,6 +37,8 @@ namespace ORB_SLAM2
 
 class Tracking;
 class Viewer;
+//class ObjectBox;
+
 
 class FrameDrawer
 {
@@ -62,6 +65,8 @@ protected:
     vector<cv::KeyPoint> mvIniKeys;
     vector<int> mvIniMatches;
     int mState;
+
+//    vector<ObjectBox> mvObjectBoxes;
 
     Map* mpMap;
 

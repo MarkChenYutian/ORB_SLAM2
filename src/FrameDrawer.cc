@@ -91,8 +91,8 @@ cv::Mat FrameDrawer::DrawFrame()
         mnTracked=0;
         mnTrackedVO=0;
         const float r = 5;
-        const int n = vCurrentKeys.size();
-        for(int i=0;i<n;i++)
+        const size_t n = vCurrentKeys.size();
+        for(size_t i=0;i<n;i++)
         {
             if(vbVO[i] || vbMap[i])
             {
@@ -139,8 +139,8 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
             s << "SLAM MODE |  ";
         else
             s << "LOCALIZATION | ";
-        int nKFs = mpMap->KeyFramesInMap();
-        int nMPs = mpMap->MapPointsInMap();
+        size_t nKFs = mpMap->KeyFramesInMap();
+        size_t nMPs = mpMap->MapPointsInMap();
         s << "KFs: " << nKFs << ", MPs: " << nMPs << ", Matches: " << mnTracked;
         if(mnTrackedVO>0)
             s << ", + VO matches: " << mnTrackedVO;
@@ -169,7 +169,7 @@ void FrameDrawer::Update(Tracking *pTracker)
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
-    N = mvCurrentKeys.size();
+    N = (int) mvCurrentKeys.size();
     mvbVO = vector<bool>(N,false);
     mvbMap = vector<bool>(N,false);
     mbOnlyTracking = pTracker->mbOnlyTracking;

@@ -163,7 +163,7 @@ void Tracking::SetViewer(Viewer *pViewer)
     mpViewer=pViewer;
 }
 
-cv::Mat Tracking::GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
+cv::Mat Tracking::GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const vector<ObjectBox> &vObjectBox, const double &timestamp)
     {
       mImGray = imRectLeft;
       cv::Mat imGrayRight = imRectRight;

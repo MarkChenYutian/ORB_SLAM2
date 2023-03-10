@@ -11,10 +11,14 @@
 
 #include<System.h>
 
+#include"Object.h"
+
 using namespace std;
 
 void LoadImages(const string &strPathToSeqLeft, const string &strPathToSeqRight, vector<string> &vstrImageLeft,
                 vector<string> &vstrImageRight, vector<double> &vTimestamps);
+
+void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vector<ORB_SLAM2::ObjectBox>> &mapAllObjects);
 
 int main(int argc, char **argv)
 {
@@ -33,10 +37,12 @@ int main(int argc, char **argv)
   vector<string> vstrImageLeft;
   vector<string> vstrImageRight;
   vector<double> vTimestamps;
+  unordered_map<double, vector<ORB_SLAM2::ObjectBox>> mapAllObjects;
 
   LoadImages(string(argv[3]), string(argv[4]), vstrImageLeft, vstrImageRight, vTimestamps);
+  LoadObjects(string(argv[5]), mapAllObjects);
 
-  const int nImages = vstrImageLeft.size();
+  const size_t nImages = vstrImageLeft.size();
 
   // Create SLAM system. It initializes all system threads and gets ready to process frames.
   ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
@@ -51,7 +57,7 @@ int main(int argc, char **argv)
 
   // Main loop
   cv::Mat imLeft, imRight;
-  for(int ni=0; ni<nImages; ni++)
+  for(size_t ni=0; ni<nImages; ni++)
   {
     // Read left and right images from file
     imLeft = cv::imread(vstrImageLeft[ni],CV_LOAD_IMAGE_UNCHANGED);
@@ -72,7 +78,7 @@ int main(int argc, char **argv)
 #endif
 
     // Pass the images to the SLAM system
-    SLAM.TrackObject(imLeft,imRight,tframe);
+    SLAM.TrackObject(imLeft,imRight,mapAllObjects[tframe],tframe);
 
 #ifdef COMPILEDWITHC11
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -80,7 +86,7 @@ int main(int argc, char **argv)
     std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
 #endif
 
-    double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
+    float ttrack= std::chrono::duration_cast<std::chrono::duration<float> >(t2 - t1).count();
 
     vTimesTrack[ni]=ttrack;
 
@@ -94,7 +100,7 @@ int main(int argc, char **argv)
     if(ttrack<T)
       // Note: I changed this since the KITTI tracking dataset does not contain
       // timestamp information, so just play all the stamps in constant time spacing
-      usleep((T-ttrack)*5e4);
+      usleep((unsigned int) ((T-ttrack)*5e4));
   }
 
   // Stop all threads
@@ -155,5 +161,60 @@ void LoadImages(const string &strPathToSeqLeft, const string &strPathToSeqRight,
     parser << imageName.substr(0, imageName.size() - 4);
     parser >> timeStamp;
     vTimestamps.emplace_back(timeStamp);
+  }
+}
+
+void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vector<ORB_SLAM2::ObjectBox>> &mapAllObjects) {
+  ifstream fObjects;
+  fObjects.open(strPathToObjectLabel);
+  if (fObjects.fail()) {
+    cerr << "Failed to read object label in the directory: " << strPathToObjectLabel << endl;
+    exit(1);
+  }
+  while (!fObjects.eof()) {
+    string line;
+    getline(fObjects, line);
+    if (line.empty()) continue;
+
+    stringstream tokenizer(line);
+    string token;
+
+    double frame_number;
+    int object_id;
+    string object_label;
+    double lx, ly, rx, ry;
+
+    // Frame number
+    getline(tokenizer, token, ' ');
+    frame_number = stod(token);
+
+    // Object ID
+    getline(tokenizer, token, ' ');
+    object_id = stoi(token);
+
+    // Object Label
+    getline(tokenizer, object_label, ' ');
+
+    // Truncated (unused)
+    getline(tokenizer, token, ' ');
+    // Occluded (unused)
+    getline(tokenizer, token, ' ');
+    // Alpha (unused)
+    getline(tokenizer, token, ' ');
+
+    // Bound Box
+    getline(tokenizer, token, ' ');
+    lx = stod(token);
+    getline(tokenizer, token, ' ');
+    ly = stod(token);
+    getline(tokenizer, token, ' ');
+    rx = stod(token);
+    getline(tokenizer, token, ' ');
+    ry = stod(token);
+
+    if (mapAllObjects.find(frame_number) == mapAllObjects.end()) {
+      mapAllObjects[frame_number] = vector<ORB_SLAM2::ObjectBox>();
+    }
+    mapAllObjects[frame_number].emplace_back(object_id, lx, ly, rx, ry, object_label);
   }
 }

@@ -36,6 +36,7 @@
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
 #include "Viewer.h"
+#include "Object.h"
 
 namespace ORB_SLAM2
 {
@@ -46,6 +47,7 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class ObjectBox;
 
 class System
 {
@@ -60,10 +62,10 @@ public:
 public:
 
     // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-    System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true);
+    System(const string &strVocFile, const string &strSettingsFile, eSensor sensor, bool bUseViewer = true);
 
     // Process the given stereo frame, but with dynamic objects taken into consideration
-    cv::Mat TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp);
+    cv::Mat TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, const vector<ObjectBox> &vObjectBox, const double &timestamp);
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.

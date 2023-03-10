@@ -48,6 +48,9 @@ public:
     // Copy constructor.
     Frame(const Frame &frame);
 
+    // Constructor for stereo cameras with object information.
+    // Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, const vector<ObjectBox> &vObjectBox, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+
     // Constructor for stereo cameras.
     Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
@@ -187,6 +190,8 @@ public:
 
     static bool mbInitialComputations;
 
+    // Object info.
+    // vector<ObjectBox> mvObjectBoxes;
 
 private:
 
