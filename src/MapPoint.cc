@@ -20,6 +20,7 @@
 
 #include "MapPoint.h"
 #include "ORBmatcher.h"
+#include "Object.h"
 
 #include<mutex>
 
@@ -192,19 +193,19 @@ void MapPoint::Replace(MapPoint* pMP)
         mpReplaced = pMP;
     }
 
-    for(map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(pair<KeyFrame *const, unsigned long> &ob : obs)
     {
         // Replace measurement in keyframe
-        KeyFrame* pKF = mit->first;
+        KeyFrame* pKF = ob.first;
 
         if(!pMP->IsInKeyFrame(pKF))
         {
-            pKF->ReplaceMapPointMatch(mit->second, pMP);
-            pMP->AddObservation(pKF,mit->second);
+            pKF->ReplaceMapPointMatch(ob.second, pMP);
+            pMP->AddObservation(pKF,ob.second);
         }
         else
         {
-            pKF->EraseMapPointMatch(mit->second);
+            pKF->EraseMapPointMatch(ob.second);
         }
     }
     pMP->IncreaseFound(nfound);
@@ -347,9 +348,9 @@ void MapPoint::UpdateNormalAndDepth()
 
     cv::Mat normal = cv::Mat::zeros(3,1,CV_32F);
     int n=0;
-    for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+    for(pair<KeyFrame *const, unsigned long> & observation : observations)
     {
-        KeyFrame* pKF = mit->first;
+        KeyFrame* pKF = observation.first;
         cv::Mat Owi = pKF->GetCameraCenter();
         cv::Mat normali = mWorldPos - Owi;
         normal = normal + normali/cv::norm(normali);
@@ -416,6 +417,16 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
     return nScale;
 }
 
-
+void MapPoint::SetObjectObservation(const cv::KeyPoint& kpt, const vector<ObjectObservation *>& vObjObs) {
+  // Figure out which object the mappoint is on (or maybe no object)
+  for (ObjectObservation *ObjectObs : vObjObs) {
+    if (kpt.pt.x >= ObjectObs->mdlx && kpt.pt.x <= ObjectObs->mdrx &&
+        kpt.pt.y >= ObjectObs->mdly && kpt.pt.y <= ObjectObs->mdry) {
+      mpObjectObservation = ObjectObs;
+      ObjectObs->mvObjectObsPoints.emplace_back(this);
+      break;
+    }
+  }
+}
 
 } //namespace ORB_SLAM

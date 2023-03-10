@@ -47,7 +47,7 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
-class ObjectBox;
+class ObjectObservation;
 
 class System
 {
@@ -65,7 +65,7 @@ public:
     System(const string &strVocFile, const string &strSettingsFile, eSensor sensor, bool bUseViewer = true);
 
     // Process the given stereo frame, but with dynamic objects taken into consideration
-    cv::Mat TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, const vector<ObjectBox> &vObjectBox, const double &timestamp);
+    cv::Mat TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, vector<ObjectObservation*> vObjectBox, const double &timestamp);
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.

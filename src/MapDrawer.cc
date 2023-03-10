@@ -21,12 +21,12 @@
 #include "MapDrawer.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "Object.h"
 #include <pangolin/pangolin.h>
 #include <mutex>
 
 namespace ORB_SLAM2
 {
-
 
 MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 {
@@ -55,11 +55,11 @@ void MapDrawer::DrawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(0.0,0.0,0.0);
 
-    for(size_t i=0, iend=vpMPs.size(); i<iend;i++)
+    for(MapPoint* vpMP : vpMPs)
     {
-        if(vpMPs[i]->isBad() || spRefMPs.count(vpMPs[i]))
+        if(vpMP->isBad() || spRefMPs.count(vpMP) || vpMP->mpObjectObservation != nullptr)
             continue;
-        cv::Mat pos = vpMPs[i]->GetWorldPos();
+        cv::Mat pos = vpMP->GetWorldPos();
         glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
     }
     glEnd();
@@ -68,12 +68,33 @@ void MapDrawer::DrawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
-    for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
+    for(MapPoint* spRefMP : spRefMPs)
     {
-        if((*sit)->isBad())
+        if(spRefMP->isBad())
             continue;
-        cv::Mat pos = (*sit)->GetWorldPos();
+        cv::Mat pos = spRefMP->GetWorldPos();
         glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
+
+    }
+
+    glEnd();
+
+    // Draw object mappoints
+    glPointSize(5);
+    glBegin(GL_POINTS);
+    glColor3f(0.0,0.0,1.0);
+
+    for(MapPoint* vpMP : vpMPs)
+    {
+      if(vpMP->mpObjectObservation == nullptr || vpMP->isBad())
+        continue;
+
+      ObjectObservation* objObs = vpMP->mpObjectObservation;
+      if (! objObs->isCareObject())
+        continue;
+
+      cv::Mat pos = vpMP->GetWorldPos();
+      glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
 
     }
 

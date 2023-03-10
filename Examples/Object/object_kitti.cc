@@ -18,7 +18,7 @@ using namespace std;
 void LoadImages(const string &strPathToSeqLeft, const string &strPathToSeqRight, vector<string> &vstrImageLeft,
                 vector<string> &vstrImageRight, vector<double> &vTimestamps);
 
-void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vector<ORB_SLAM2::ObjectBox>> &mapAllObjects);
+void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vector<ORB_SLAM2::ObjectObservation*>> &mapAllObjects);
 
 int main(int argc, char **argv)
 {
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   vector<string> vstrImageLeft;
   vector<string> vstrImageRight;
   vector<double> vTimestamps;
-  unordered_map<double, vector<ORB_SLAM2::ObjectBox>> mapAllObjects;
+  unordered_map<double, vector<ORB_SLAM2::ObjectObservation*>> mapAllObjects;
 
   LoadImages(string(argv[3]), string(argv[4]), vstrImageLeft, vstrImageRight, vTimestamps);
   LoadObjects(string(argv[5]), mapAllObjects);
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     if(ttrack<T)
       // Note: I changed this since the KITTI tracking dataset does not contain
       // timestamp information, so just play all the stamps in constant time spacing
-      usleep((unsigned int) ((T-ttrack)*5e4));
+      usleep((unsigned int) ((T-ttrack)*1e5));
   }
 
   // Stop all threads
@@ -119,6 +119,9 @@ int main(int argc, char **argv)
 
   // Save camera trajectory
   SLAM.SaveTrajectoryKITTI("CameraTrajectory.txt");
+
+  // Analyze the object Mappoints
+//  for (auto )
 
   return 0;
 }
@@ -164,7 +167,7 @@ void LoadImages(const string &strPathToSeqLeft, const string &strPathToSeqRight,
   }
 }
 
-void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vector<ORB_SLAM2::ObjectBox>> &mapAllObjects) {
+void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vector<ORB_SLAM2::ObjectObservation*>> &mapAllObjects) {
   ifstream fObjects;
   fObjects.open(strPathToObjectLabel);
   if (fObjects.fail()) {
@@ -182,7 +185,7 @@ void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vecto
     double frame_number;
     int object_id;
     string object_label;
-    double lx, ly, rx, ry;
+    float lx, ly, rx, ry;
 
     // Frame number
     getline(tokenizer, token, ' ');
@@ -204,17 +207,20 @@ void LoadObjects(const string &strPathToObjectLabel, unordered_map<double, vecto
 
     // Bound Box
     getline(tokenizer, token, ' ');
-    lx = stod(token);
+    lx = stof(token);
     getline(tokenizer, token, ' ');
-    ly = stod(token);
+    ly = stof(token);
     getline(tokenizer, token, ' ');
-    rx = stod(token);
+    rx = stof(token);
     getline(tokenizer, token, ' ');
-    ry = stod(token);
+    ry = stof(token);
 
     if (mapAllObjects.find(frame_number) == mapAllObjects.end()) {
-      mapAllObjects[frame_number] = vector<ORB_SLAM2::ObjectBox>();
+      mapAllObjects[frame_number] = vector<ORB_SLAM2::ObjectObservation*>();
     }
-    mapAllObjects[frame_number].emplace_back(object_id, lx, ly, rx, ry, object_label);
+
+    auto *observation = new ORB_SLAM2::ObjectObservation(object_id, lx, ly, rx, ry, object_label);
+
+    mapAllObjects[frame_number].emplace_back(observation);
   }
 }

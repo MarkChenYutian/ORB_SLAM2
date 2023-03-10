@@ -24,6 +24,7 @@
 #include"KeyFrame.h"
 #include"Frame.h"
 #include"Map.h"
+//#include"Object.h"
 
 #include<opencv2/core/core.hpp>
 #include<mutex>
@@ -34,6 +35,7 @@ namespace ORB_SLAM2
 class KeyFrame;
 class Map;
 class Frame;
+class ObjectObservation;
 
 
 class MapPoint
@@ -66,7 +68,7 @@ public:
     void IncreaseVisible(int n=1);
     void IncreaseFound(int n=1);
     float GetFoundRatio();
-    inline int GetFound(){
+    inline int GetFound() const{
         return mnFound;
     }
 
@@ -80,6 +82,8 @@ public:
     float GetMaxDistanceInvariance();
     int PredictScale(const float &currentDist, KeyFrame*pKF);
     int PredictScale(const float &currentDist, Frame* pF);
+
+    void SetObjectObservation(const cv::KeyPoint& kpt, const vector<ObjectObservation*>& vObjObs);
 
 public:
     long unsigned int mnId;
@@ -109,6 +113,7 @@ public:
     cv::Mat mPosGBA;
     long unsigned int mnBAGlobalForKF;
 
+    ObjectObservation* mpObjectObservation = static_cast<ObjectObservation *>(nullptr);
 
     static std::mutex mGlobalMutex;
 

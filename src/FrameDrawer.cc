@@ -119,6 +119,17 @@ cv::Mat FrameDrawer::DrawFrame()
         }
     }
 
+    // Draw object bbox
+    for (ObjectObservation* objectBox : mvObjectBoxes) {
+      if (!objectBox->isCareObject()) continue;
+
+      cv::Point2f p1, p2;
+      p1.x = objectBox->mdlx; p1.y = objectBox->mdly;
+      p2.x = objectBox->mdrx; p2.y = objectBox->mdry;
+
+      cv::rectangle(im, p1, p2, cv::Scalar(0, 0, 255));
+    }
+
     cv::Mat imWithInfo;
     DrawTextInfo(im,state, imWithInfo);
 
@@ -169,11 +180,11 @@ void FrameDrawer::Update(Tracking *pTracker)
     unique_lock<mutex> lock(mMutex);
     pTracker->mImGray.copyTo(mIm);
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
+    mvObjectBoxes=pTracker->mCurrentFrame.mvObjectBoxes;
     N = (int) mvCurrentKeys.size();
     mvbVO = vector<bool>(N,false);
     mvbMap = vector<bool>(N,false);
     mbOnlyTracking = pTracker->mbOnlyTracking;
-
 
     if(pTracker->mLastProcessedState==Tracking::NOT_INITIALIZED)
     {

@@ -163,7 +163,7 @@ void Tracking::SetViewer(Viewer *pViewer)
     mpViewer=pViewer;
 }
 
-cv::Mat Tracking::GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const vector<ObjectBox> &vObjectBox, const double &timestamp)
+cv::Mat Tracking::GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const vector<ObjectObservation*> &vObjectBox, const double &timestamp)
     {
       mImGray = imRectLeft;
       cv::Mat imGrayRight = imRectRight;
@@ -195,7 +195,7 @@ cv::Mat Tracking::GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRe
         }
       }
 
-      mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
+      mCurrentFrame = Frame(mImGray,imGrayRight,timestamp, vObjectBox, mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
       Track();
 
@@ -565,6 +565,11 @@ void Tracking::StereoInitialization()
             {
                 cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
                 MapPoint* pNewMP = new MapPoint(x3D,pKFini,mpMap);
+
+                // Find which object this mappoint is on
+                cv::KeyPoint kp1 = mCurrentFrame.mvKeys[i];
+                pNewMP->SetObjectObservation(kp1, mCurrentFrame.mvObjectBoxes);
+
                 pNewMP->AddObservation(pKFini,i);
                 pKFini->AddMapPoint(pNewMP,i);
                 pNewMP->ComputeDistinctiveDescriptors();
@@ -1150,6 +1155,11 @@ void Tracking::CreateNewKeyFrame()
                 {
                     cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
                     MapPoint* pNewMP = new MapPoint(x3D,pKF,mpMap);
+
+                    // Figure out which object the mappoint is on (or maybe no object)
+                    cv::KeyPoint kp1 = mCurrentFrame.mvKeys[i];
+                    pNewMP->SetObjectObservation(kp1, mCurrentFrame.mvObjectBoxes);
+
                     pNewMP->AddObservation(pKF,i);
                     pKF->AddMapPoint(pNewMP,i);
                     pNewMP->ComputeDistinctiveDescriptors();

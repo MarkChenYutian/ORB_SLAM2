@@ -109,7 +109,7 @@ namespace ORB_SLAM2 {
       mpLoopCloser->SetLocalMapper(mpLocalMapper);
     }
 
-    cv::Mat System::TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, const vector<ObjectBox> &vObjectBox, const double &timestamp) {
+    cv::Mat System::TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, vector<ObjectObservation*> vObjectBox, const double &timestamp) {
       if (mSensor != STEREO) {
         cerr << "ERROR: you called TrackObject but input sensor was not set to STEREO." << endl;
         exit(-1);

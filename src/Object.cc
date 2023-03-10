@@ -1,20 +1,20 @@
-#include <Object.h>
+#include "Object.h"
 
 namespace ORB_SLAM2 {
 
-ObjectBox::ObjectBox(int trackID, double lx, double ly, double rx, double ry, const string &objectLabel):
+ObjectObservation::ObjectObservation(int trackID, float lx, float ly, float rx, float ry, const string &objectLabel):
     miTrackID(trackID),
     mdlx(lx), mdly(ly), mdrx(rx), mdry(ry)
 {
   if (objectLabel == "DontCare") {
-    mObjectType = ObjectBox::DONTCARE;
+    mObjectType = ObjectObservation::DONTCARE;
   } else {
-    mObjectType = ObjectBox::CARE;
+    mObjectType = ObjectObservation::CARE;
   }
 }
 
-bool ObjectBox::isCareObject() {
-  return mObjectType != ObjectBox::DONTCARE;
+bool ObjectObservation::isCareObject() const {
+  return mObjectType != ObjectObservation::DONTCARE;
 }
 
 }

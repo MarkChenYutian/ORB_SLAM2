@@ -50,7 +50,7 @@ class Map;
 class LocalMapping;
 class LoopClosing;
 class System;
-class ObjectBox;
+class ObjectObservation;
 
 class Tracking
 {  
@@ -60,7 +60,7 @@ public:
              KeyFrameDatabase* pKFDB, const string &strSettingPath, int sensor);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageObject(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const vector<ObjectBox> &vObjectBox, const double &timestamp);
+    cv::Mat GrabImageObject(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const vector<ObjectObservation*>& vObjectBox, const double &timestamp);
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
     cv::Mat GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp);
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);

@@ -39,6 +39,7 @@ namespace ORB_SLAM2
 
 class MapPoint;
 class KeyFrame;
+class ObjectObservation;
 
 class Frame
 {
@@ -49,7 +50,7 @@ public:
     Frame(const Frame &frame);
 
     // Constructor for stereo cameras with object information.
-    // Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, const vector<ObjectBox> &vObjectBox, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, const vector<ObjectObservation*> &vObjectBox, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Constructor for stereo cameras.
     Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
@@ -89,7 +90,7 @@ public:
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
-    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
+    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, int minLevel=-1, int maxLevel=-1) const;
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
     // If there is a match, depth is computed and the right coordinate associated to the left keypoint is stored.
@@ -191,7 +192,7 @@ public:
     static bool mbInitialComputations;
 
     // Object info.
-    // vector<ObjectBox> mvObjectBoxes;
+    vector<ObjectObservation*> mvObjectBoxes = vector<ObjectObservation*>();
 
 private:
 
