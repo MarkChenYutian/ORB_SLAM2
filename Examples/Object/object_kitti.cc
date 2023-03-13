@@ -37,10 +37,10 @@ int main(int argc, char **argv)
   vector<string> vstrImageLeft;
   vector<string> vstrImageRight;
   vector<double> vTimestamps;
-  unordered_map<double, vector<ORB_SLAM2::ObjectObservation*>> mapAllObjects;
+  unordered_map<double, vector<ORB_SLAM2::ObjectObservation*>> mapAllObjectObservations;
 
   LoadImages(string(argv[3]), string(argv[4]), vstrImageLeft, vstrImageRight, vTimestamps);
-  LoadObjects(string(argv[5]), mapAllObjects);
+  LoadObjects(string(argv[5]), mapAllObjectObservations);
 
   const size_t nImages = vstrImageLeft.size();
 
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 #endif
 
     // Pass the images to the SLAM system
-    SLAM.TrackObject(imLeft,imRight,mapAllObjects[tframe],tframe);
+    SLAM.TrackObject(imLeft, imRight, mapAllObjectObservations[tframe], tframe);
 
 #ifdef COMPILEDWITHC11
     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

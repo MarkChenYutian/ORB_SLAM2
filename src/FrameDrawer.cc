@@ -121,7 +121,7 @@ cv::Mat FrameDrawer::DrawFrame()
 
     // Draw object bbox
     for (ObjectObservation* objectBox : mvObjectBoxes) {
-      if (!objectBox->isCareObject()) continue;
+      if (!objectBox->IsCareObject()) continue;
 
       cv::Point2f p1, p2;
       p1.x = objectBox->mdlx; p1.y = objectBox->mdly;

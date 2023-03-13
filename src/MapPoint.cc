@@ -422,7 +422,9 @@ void MapPoint::SetObjectObservation(const cv::KeyPoint& kpt, const vector<Object
   for (ObjectObservation *ObjectObs : vObjObs) {
     if (kpt.pt.x >= ObjectObs->mdlx && kpt.pt.x <= ObjectObs->mdrx &&
         kpt.pt.y >= ObjectObs->mdly && kpt.pt.y <= ObjectObs->mdry) {
+      // MapPoint -> Observation
       mpObjectObservation = ObjectObs;
+      // Observation -> MapPoint
       ObjectObs->mvObjectObsPoints.emplace_back(this);
       break;
     }

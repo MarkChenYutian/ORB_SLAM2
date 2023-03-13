@@ -9,23 +9,42 @@
 namespace ORB_SLAM2 {
     class MapPoint;
 
+    enum ObjectType {
+        CARE = 0,
+        DONTCARE = -1,
+    };
+
+    class MapObject {
+    public:
+        int miTrackID;
+        ObjectType mObjectType;
+        vector<ObjectObservation*> mvObservations;
+
+    public:
+        MapObject(int TrackID, ObjectType ObjType);
+    };
+
     /*
      * ObjectObservation is a class that handles the object bounding box provided by the dataset
      */
     class ObjectObservation {
     public:
-        enum ObjectType {
-            CARE = 0,
-            DONTCARE = -1,
-        };
-
         int miTrackID;
-        float mdlx, mdly, mdrx, mdry;
         ObjectType mObjectType;
+        float mdlx, mdly, mdrx, mdry;
         vector<MapPoint*> mvObjectObsPoints;
 
+        MapObject *mpMapObject;
+
+        ObjectObservation* mpNextObservation;
+        ObjectObservation* mpPrevObservation;
+    public:
         ObjectObservation(int TrackID, float lx, float ly, float rx, float ry, const string &objectLabel);
-        bool isCareObject() const;
+        bool IsCareObject() const;
+        tuple<int, int, int> GetColorForDisplay() const;
+
+        ObjectObservation* NextObservation();
+        ObjectObservation* PrevObservation();
     };
 }
 

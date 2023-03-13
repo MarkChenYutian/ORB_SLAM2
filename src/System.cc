@@ -109,7 +109,7 @@ namespace ORB_SLAM2 {
       mpLoopCloser->SetLocalMapper(mpLocalMapper);
     }
 
-    cv::Mat System::TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, vector<ObjectObservation*> vObjectBox, const double &timestamp) {
+    cv::Mat System::TrackObject(const cv::Mat &imLeft, const cv::Mat &imRight, const vector<ObjectObservation*>& vObjectBox, const double &timestamp) {
       if (mSensor != STEREO) {
         cerr << "ERROR: you called TrackObject but input sensor was not set to STEREO." << endl;
         exit(-1);
@@ -142,6 +142,31 @@ namespace ORB_SLAM2 {
         if (mbReset) {
           mpTracker->Reset();
           mbReset = false;
+        }
+      }
+
+      // Link Objects
+      {
+        unique_lock<mutex> lock(mMutexObject);
+        for (ObjectObservation *objectObs : vObjectBox) {
+          if (mvAllObjects.find(objectObs->miTrackID) == mvAllObjects.end()) {
+            // This object is in the track for the first time
+            auto* pMapObject = new MapObject(objectObs->miTrackID, objectObs->mObjectType);
+            mvAllObjects[objectObs->miTrackID] = pMapObject;
+            // Add observation to MapObject
+            pMapObject->mvObservations.emplace_back(objectObs);
+            // Add Reference of MapObject to Observation
+            objectObs->mpMapObject = pMapObject;
+          } else {
+            MapObject* pMapObject = mvAllObjects[objectObs->miTrackID];
+            // Build up double linked list
+            objectObs->mpPrevObservation = pMapObject->mvObservations.back();
+            pMapObject->mvObservations.back()->mpNextObservation = objectObs;
+            // Add observation to MapObject
+            pMapObject->mvObservations.emplace_back(objectObs);
+            // Add Reference of MapObject to Observation
+            objectObs->mpMapObject = pMapObject;
+          }
         }
       }
 

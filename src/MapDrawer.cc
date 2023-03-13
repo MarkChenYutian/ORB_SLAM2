@@ -41,7 +41,7 @@ MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 
 }
 
-void MapDrawer::DrawMapPoints()
+void MapDrawer::DrawMapPoints() const
 {
     const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
     const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
@@ -78,30 +78,40 @@ void MapDrawer::DrawMapPoints()
     }
 
     glEnd();
-
-    // Draw object mappoints
-    glPointSize(5);
-    glBegin(GL_POINTS);
-    glColor3f(0.0,0.0,1.0);
-
-    for(MapPoint* vpMP : vpMPs)
-    {
-      if(vpMP->mpObjectObservation == nullptr || vpMP->isBad())
-        continue;
-
-      ObjectObservation* objObs = vpMP->mpObjectObservation;
-      if (! objObs->isCareObject())
-        continue;
-
-      cv::Mat pos = vpMP->GetWorldPos();
-      glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
-
-    }
-
-    glEnd();
 }
 
-void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
+void MapDrawer::DrawObjectPoints() const{
+  const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+  const vector<KeyFrame*> &vpKFs = mpMap->GetAllKeyFrames();
+  // Draw object mappoints
+  glPointSize(5);
+  glBegin(GL_POINTS);
+
+
+  for (KeyFrame* pKF : vpKFs) {
+    for (ObjectObservation* pObjObs : pKF->mvObjectObs) {
+      if (!pObjObs->IsCareObject()) continue;
+
+      tuple<int, int, int> color = pObjObs->GetColorForDisplay();
+      float r, g, b;
+      r = (float) get<0>(color);
+      g = (float) get<1>(color);
+      b = (float) get<2>(color);
+      glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
+
+      for (MapPoint* pMP : pObjObs->mvObjectObsPoints) {
+        if (pMP == nullptr) { cerr << "Unexpected nullptr" << endl; continue; }
+
+        cv::Mat pos = pMP->GetWorldPos();
+        glVertex3f(pos.at<float>(0),pos.at<float>(1),pos.at<float>(2));
+      }
+
+    }
+  }
+  glEnd();
+}
+
+void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph) const
 {
     const float &w = mKeyFrameSize;
     const float h = w*0.75;
